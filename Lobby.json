@@ -1,0 +1,27 @@
+{
+	"mainFields": ["Multiplier"], 
+	"fields":
+	{
+		"Multiplier":
+		{
+			"type": "select",
+			"options":
+			[
+				"x3.0",
+				"x1.5",
+				"x2.0"
+				
+			]
+		},
+		"Cap":
+		{
+			"type": "select",
+			"options":
+			[
+				"80%",
+				"60%",
+				"100%"
+			]
+		}
+	}
+}
