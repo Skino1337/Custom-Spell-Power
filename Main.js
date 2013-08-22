@@ -1,5 +1,6 @@
 /* Custom Spell Power
 	By Skino
+	
 */
 
 game.hook("Dota_OnGetAbilityValue", onGetAbilityValue);
