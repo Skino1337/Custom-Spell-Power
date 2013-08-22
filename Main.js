@@ -1,15 +1,15 @@
 /* Custom Spell Power
 	By Skino
-	
 */
 
 game.hook("Dota_OnGetAbilityValue", onGetAbilityValue);
 //game.hookEvent("entity_hurt", onEntityHurt, true);
 
-var DEBUG = false;
+var DEBUG = true;
 
 var g_Mult = 3.0;
 var g_Cap = 80.0;
+var g_Spells = true, g_Items = true;
 
 var replacedMap = [];
 
@@ -43,6 +43,24 @@ plugin.get("LobbyManager", function(lobbyManager)
 		break;
 	case "100%":
 		g_Cap = 100.0;
+		break;
+	}
+	
+	var s = lobbyManager.getOptionsForPlugin("CustomSpellPower")["Spec"];
+	switch(s)
+	{
+	default:
+	case "Spells and Items":
+		g_Spells = true;
+		g_Items = true;
+		break;
+	case "Spells":
+		g_Spells = true;
+		g_Items = false;
+		break;
+	case "Items":
+		g_Spells = false;
+		g_Items = true;
 		break;
 	}
 });
@@ -89,6 +107,7 @@ var increaseParam =
 	"reduction",
 	"heal",
 	"hp",
+	"health",
 	"armor",
 	"regen",
 	"ministun",
@@ -99,24 +118,31 @@ var increaseParam =
 	// Special
 	"mana_void_ministun",
 	"points_per_tick",
+	"per_stack"
 ];
 
 var decreaseParam =
 [
 	"fade_delay",
 	"fade_time",
-	"land_time"
+	"land_time",
+	// Special
+	"focusfire_damage_reduction"
 ];
 
 var fixedCapParam =
 [
 	"movement_speed",
 	"movespeed",
+	"move_slow",
 	"ms",
 	"chance",
 	"percent",
-	"pct",
-	"evasion"
+	"evasion",
+	"magical_armor",
+	"spell_resist",
+	"magic_damage_reduction",
+	"attack_speed_pct"
 ];
 
 function onGetAbilityValue(ability, abilityName, field, values)
@@ -125,6 +151,17 @@ function onGetAbilityValue(ability, abilityName, field, values)
 	
 	if (typeof replacedMap[fullName] != "undefined") return;
 	replacedMap[fullName] = true;
+	
+	if (abilityName.indexOf("item_") != -1)
+	{
+		if (!g_Items)
+			return;
+	}
+	else
+	{
+		if (!g_Spells)
+			return;
+	}
 	
 	for (var i in ignoreSpecific)
 	{
@@ -197,13 +234,7 @@ function changePower(values, inc, g_Caped)
 		values = values.map(function(v) {return v / g_Mult;});
 		
 	if (g_Caped)
-		values = values.map(function(v)
-		{
-			if (v > g_Cap)
-				return g_Cap;
-				
-			return v;
-		});
+		values = values.map(function(v) {return Math.min(v, g_Cap);});
 	
 	if (DEBUG) printToAll("Power changed: " + oldValues + " => " + values);
 	
