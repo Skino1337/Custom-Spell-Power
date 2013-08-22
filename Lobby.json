@@ -22,6 +22,16 @@
 				"60%",
 				"100%"
 			]
+		},
+		"Spec":
+		{
+			"type": "select",
+			"options":
+			[
+				"Spells and Items",
+				"Spells",
+				"Items"
+			]
 		}
 	}
 }
