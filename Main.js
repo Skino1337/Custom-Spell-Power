@@ -1,18 +1,18 @@
-/* Custom Spell Power
-	By Skino
-*/
+/* Custom Spell Power by Skino */
+
+//[CSP] Custom Spell Power by Skino
+//[CSP] Found bug? Do not be silent! All info in plugin page.
 
 game.hook("Dota_OnGetAbilityValue", onGetAbilityValue);
 //game.hookEvent("entity_hurt", onEntityHurt, true);
 
-var DEBUG = true;
+var DEBUG = false;
 
 var g_Mult = 3.0;
 var g_Cap = 80.0;
 var g_Spells = true, g_Items = true;
 
 var replacedMap = [];
-
 
 plugin.get("LobbyManager", function(lobbyManager)
 {
@@ -67,12 +67,14 @@ plugin.get("LobbyManager", function(lobbyManager)
 
 var ignoreSpecific =
 [
-	"backdoor_protection",
+	"backdoor_protection.radius",
 	"antimage_blink.min_blink_range",
 	"drow_ranger_marksmanship.radius",
 	"nevermore_shadowraze1.shadowraze_range",
 	"nevermore_shadowraze2.shadowraze_range",
 	"nevermore_shadowraze3.shadowraze_range",
+	"windrunner_powershot.damage_reduction",
+	"windrunner_powershot.speed_reduction",
 	"item_tpscroll"
 ];
 
@@ -99,6 +101,7 @@ var increaseParam =
 	"distance",
 	"range",
 	"aoe",
+	"area",
 	"duration",
 	"amount",
 	"count",
@@ -118,7 +121,9 @@ var increaseParam =
 	// Special
 	"mana_void_ministun",
 	"points_per_tick",
-	"per_stack"
+	"per_stack",
+	"explosion",
+	"spirits"
 ];
 
 var decreaseParam =
@@ -142,7 +147,8 @@ var fixedCapParam =
 	"magical_armor",
 	"spell_resist",
 	"magic_damage_reduction",
-	"attack_speed_pct"
+	"attack_speed_pct",
+	"slow_attack_speed"
 ];
 
 function onGetAbilityValue(ability, abilityName, field, values)
@@ -201,21 +207,21 @@ function onGetAbilityValue(ability, abilityName, field, values)
 		}
 	}
 	
-	for (var i in increaseParam)
-	{
-		if (field.indexOf(increaseParam[i]) != -1)
-		{
-			if (DEBUG) printToAll("increaseParam : " + fullName);
-			return changePower(values, true, false);
-		}
-	}
-
 	for (var i in decreaseParam)
 	{
 		if (field.indexOf(decreaseParam[i]) != -1)
 		{
 			if (DEBUG) printToAll("decreaseParam : " + fullName);
 			return changePower(values, false, false);
+		}
+	}
+
+	for (var i in increaseParam)
+	{
+		if (field.indexOf(increaseParam[i]) != -1)
+		{
+			if (DEBUG) printToAll("increaseParam : " + fullName);
+			return changePower(values, true, false);
 		}
 	}
 	
@@ -234,7 +240,10 @@ function changePower(values, inc, g_Caped)
 		values = values.map(function(v) {return v / g_Mult;});
 		
 	if (g_Caped)
+	{
 		values = values.map(function(v) {return Math.min(v, g_Cap);});
+		values = values.map(function(v) {return Math.max(v, -g_Cap);});
+	}
 	
 	if (DEBUG) printToAll("Power changed: " + oldValues + " => " + values);
 	
