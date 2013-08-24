@@ -59,7 +59,7 @@ function onGetAbilityValue(ability, abilityName, field, values)
 	return;
 }
 
-function changePower(values, inc, g_Caped)
+function changePower(values, isInc, isCap)
 {
 	var oldValues = values;
 	var cap = g_Cap;
@@ -83,9 +83,9 @@ function changePower(values, inc, g_Caped)
 		return Math.round(cur_chance);
 	}
 	
-	if (inc)
+	if (isInc)
 	{
-		if (g_Caped)
+		if (isCap)
 		{
 
 			values = values.map(think);
@@ -98,7 +98,7 @@ function changePower(values, inc, g_Caped)
 	}
 	else
 	{
-		if (g_Caped)
+		if (isCap)
 		{
 			values = values.map(function(v) {return Math.min(v, g_Cap);});
 			values = values.map(function(v) {return Math.max(v, -g_Cap);});
@@ -299,6 +299,7 @@ var capedParam =
 	"item_maelstrom.chain_chance",
 	"item_heavens_halberd.maim_chance"
 ]
+
 var decreaseParam =
 [
 	"mirana_invis.fade_delay",
@@ -316,7 +317,7 @@ var decreaseParam =
 	"brewmaster_storm_wind_walk.fade_time",
 	"treant_natures_guise.fade_time",
 	"windrunner_focusfire.focusfire_damage_reduction"
-];
+]
 
 var increaseParam =
 [
@@ -2354,7 +2355,7 @@ var increaseParam =
 	"item_winter_greevil_treat.duration",
 	"item_winter_greevil_garbage.buff_duration",
 	"item_winter_greevil_garbage.total_health"
-];
+]
 
 var nonBoostDamageSpells =
 [
@@ -2463,4 +2464,4 @@ var nonBoostDamageSpells =
 	["greevil_miniboss_red_earthshock",240],
 	["greevil_miniboss_orange_dragon_slave",170],
 	["greevil_miniboss_orange_light_strike_array",150]
-];
+]
