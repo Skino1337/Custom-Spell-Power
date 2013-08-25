@@ -2,7 +2,7 @@
 
 var DEBUG = false;
 
-var g_Mult = 3.0;
+var g_Mult = 5.0;
 var g_Cap = 80.0;
 var g_Spells = true, g_Items = true, g_Heroes = true, g_SpecText = "Spells & Items & Heroes";
 
@@ -26,7 +26,7 @@ function onGetAbilityValue(ability, abilityName, field, values)
 		if (!g_Spells)
 			return;
 	}
-			
+	
 	for (var i in capedParam)
 	{
 		if (fullName == capedParam[i])
@@ -35,7 +35,7 @@ function onGetAbilityValue(ability, abilityName, field, values)
 			return changePower(values, true, true);
 		}
 	}
-		
+	
 	for (var i in decreaseParam)
 	{
 		if (fullName == decreaseParam[i])
@@ -62,14 +62,16 @@ function onGetAbilityValue(ability, abilityName, field, values)
 function onUnitParsed(unit, keyvalues)
 {
 	var unitClassName = unit.getClassname();
+	var modelPath = "type: string " + keyvalues["Model"];
 	
 	if (g_Spells)
 	{
 		for (var i in spellSummoned)
 		{
-			if (spellSummoned[i].indexOf(unitClassName) != -1)
+			if (modelPath.indexOf(spellSummoned[i]) != -1)
 			{
-				keyvalues["ModelScale"] += (0.10 * g_Mult);
+				//game.precacheModel(keyvalues["Model"], true);
+				//keyvalues["ModelScale"] += (0.10 * g_Mult);
 				keyvalues["ArmorPhysical"] *= g_Mult;
 				keyvalues["AttackDamageMin"] *= g_Mult;
 				keyvalues["AttackDamageMax"] *= g_Mult;
@@ -90,9 +92,9 @@ function onUnitParsed(unit, keyvalues)
 	{
 		for (var i in itemSummoned)
 		{
-			if (itemSummoned[i].indexOf(unitClassName) != -1)
+			if (modelPath.indexOf(spellSummoned[i]) != -1)
 			{
-				keyvalues["ModelScale"] += (0.10 * g_Mult);
+				//keyvalues["ModelScale"] += (0.10 * g_Mult);
 				keyvalues["ArmorPhysical"] *= g_Mult;
 				keyvalues["AttackDamageMin"] *= g_Mult;
 				keyvalues["AttackDamageMax"] *= g_Mult;
@@ -153,7 +155,8 @@ function changePower(values, isInc, isCap)
 		if (isCap)
 		{
 
-			values = values.map(aglMult);
+			//values = values.map(aglMult); // crush???
+			values = values.map(function(v) {return v * g_Mult;});
 			
 			values = values.map(function(v) {return Math.min(v, cap);});
 			values = values.map(function(v) {return Math.max(v, -cap);});
@@ -163,13 +166,7 @@ function changePower(values, isInc, isCap)
 	}
 	else
 	{
-		if (isCap)
-		{
-			values = values.map(function(v) {return Math.min(v, g_Cap);});
-			values = values.map(function(v) {return Math.max(v, -g_Cap);});
-		}
-		else
-			values = values.map(function(v) {return v / g_Mult;});
+		values = values.map(function(v) {return v / g_Mult;});
 	}
 	
 	if (DEBUG) printToAll("Power changed: " + oldValues + " => " + values);
@@ -254,8 +251,8 @@ plugin.get("LobbyManager", function(lobbyManager)
 	var spec = lobbyManager.getOptionsForPlugin("CustomSpellPower")["Spec"];
 	g_SpecText = spec;
 	g_Spells = spec.indexOf("Spells") != -1;
-	g_Spells = spec.indexOf("Items") != -1;
-	g_Spells = spec.indexOf("Heroes") != -1;
+	g_Items = spec.indexOf("Items") != -1;
+	g_Heroes = spec.indexOf("Heroes") != -1;
 });
 
 var msgPrinted = false;
@@ -305,63 +302,34 @@ function getConnectedPlayingClients()
 	return playing;
 }
 
-var spellSummoned = 
+var spellSummoned =
 [
-	"npc_dota_lone_druid_bear1",
-	"npc_dota_lone_druid_bear2",
-	"npc_dota_lone_druid_bear3",
-	"npc_dota_lone_druid_bear4",
-	"npc_dota_visage_familiar1",
-	"npc_dota_visage_familiar2",
-	"npc_dota_visage_familiar3",
-	"npc_dota_lycan_wolf1",
-	"npc_dota_lycan_wolf2",
-	"npc_dota_lycan_wolf3",
-	"npc_dota_lycan_wolf4",
-	"npc_dota_venomancer_plague_ward_1",
-	"npc_dota_venomancer_plague_ward_2",
-	"npc_dota_venomancer_plague_ward_3",
-	"npc_dota_venomancer_plague_ward_4",
-	"npc_dota_shadow_shaman_ward_1",
-	"npc_dota_shadow_shaman_ward_2",
-	"npc_dota_shadow_shaman_ward_3",
-	"npc_dota_pugna_nether_ward_1",
-	"npc_dota_pugna_nether_ward_2",
-	"npc_dota_pugna_nether_ward_3",
-	"npc_dota_pugna_nether_ward_4",
-	"npc_dota_unit_tombstone1",
-	"npc_dota_unit_tombstone2",
-	"npc_dota_unit_tombstone3",
-	"npc_dota_unit_tombstone4",
-	"npc_dota_warlock_golem_1",
-	"npc_dota_warlock_golem_2",
-	"npc_dota_warlock_golem_3",
-	"npc_dota_warlock_golem_scepter_1",
-	"npc_dota_warlock_golem_scepter_2",
-	"npc_dota_warlock_golem_scepter_3",
-	"npc_dota_broodmother_spiderling",
-	"npc_dota_broodmother_spiderite",
-	"npc_dota_furion_treant",
-	"npc_dota_templar_assassin_psionic_trap",
-	"npc_dota_rattletrap_cog",
-	"npc_dota_weaver_swarm",
-	"npc_dota_gyrocopter_homing_missile",
-	"npc_dota_scout_hawk",
-	"npc_dota_greater_hawk",
-	"npc_dota_beastmaster_boar",
-	"npc_dota_beastmaster_greater_boar",
-	"npc_dota_witch_doctor_death_ward",
-	"npc_dota_unit_undying_zombie"
+	"spirit_bear",
+	"visage_familiar",
+	"summon_wolves",
+	"venomancer_ward",
+	"shadowshaman_totem",
+	"pugna_ward",
+	"undying_tower",
+	"warlock_demon",
+	"warlock_demon",
+	"spiderling",
+	"treant",
+	"lanaya_trap_crystal_invis",
+	"rattletrap_cog",
+	"weaver_bug",
+	"gyro_missile",
+	"beastmaster_bird",
+	"beastmaster_beast",
+	"witchdoctor_ward",
+	"undying_minion",
+	"eidelon"
 ]
 
-var itemSummoned = 
+var itemSummoned =
 [
-	"npc_dota_necronomicon_warrior_1",
-	"npc_dota_necronomicon_warrior_2",
-	"npc_dota_necronomicon_warrior_3",
-	"npc_dota_necronomicon_archer_1",
-	"npc_dota_necronomicon_archer_2",
-	"npc_dota_necronomicon_archer_3"
+	"necro_warrior",
+	"necro_archer"
 ]
 
 var capedParam =
