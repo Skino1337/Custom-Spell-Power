@@ -9,8 +9,10 @@
 			[
 				"x3.0",
 				"x1.5",
-				"x2.0"
-				
+				"x2.0",
+				"x2.5",
+				"x4.0",
+				"x5.0"
 			]
 		},
 		"Cap":
@@ -28,9 +30,13 @@
 			"type": "select",
 			"options":
 			[
-				"Spells and Items",
+				"Spells & Items & Heroes",
+				"Spells & Items",
+				"Items & Heroes",
+				"Spells & Heroes",
 				"Spells",
-				"Items"
+				"Items",
+				"Heroes"
 			]
 		}
 	}
