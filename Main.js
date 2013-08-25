@@ -4,7 +4,7 @@ var DEBUG = false;
 
 var g_Mult = 3.0;
 var g_Cap = 80.0;
-var g_Spells = true, g_Items = true, g_SpecText = "Spells and Items";
+var g_Spells = true, g_Items = true, g_Heroes = true, g_SpecText = "Spells & Items & Heroes";
 
 
 
@@ -59,12 +59,77 @@ function onGetAbilityValue(ability, abilityName, field, values)
 	return;
 }
 
+function onUnitParsed(unit, keyvalues)
+{
+	var unitClassName = unit.getClassname();
+	
+	if (g_Spells)
+	{
+		for (var i in spellSummoned)
+		{
+			if (spellSummoned[i].indexOf(unitClassName) != -1)
+			{
+				keyvalues["ModelScale"] += (0.10 * g_Mult);
+				keyvalues["ArmorPhysical"] *= g_Mult;
+				keyvalues["AttackDamageMin"] *= g_Mult;
+				keyvalues["AttackDamageMax"] *= g_Mult;
+				keyvalues["AttackRate"] -= (0.20 * g_Mult);
+				keyvalues["MovementSpeed"] += (20 * g_Mult);
+				
+				keyvalues["StatusHealth"] *= g_Mult;
+				keyvalues["StatusHealthRegen"] *= g_Mult;
+				keyvalues["StatusMana"] *= g_Mult;
+				keyvalues["StatusManaRegen"] *= g_Mult;
+				
+				break;
+			}
+		}
+	}
+	
+	if (g_Items)
+	{
+		for (var i in itemSummoned)
+		{
+			if (itemSummoned[i].indexOf(unitClassName) != -1)
+			{
+				keyvalues["ModelScale"] += (0.10 * g_Mult);
+				keyvalues["ArmorPhysical"] *= g_Mult;
+				keyvalues["AttackDamageMin"] *= g_Mult;
+				keyvalues["AttackDamageMax"] *= g_Mult;
+				keyvalues["AttackRate"] -= (0.20 * g_Mult);
+				keyvalues["MovementSpeed"] += (20 * g_Mult);
+				
+				keyvalues["StatusHealth"] *= g_Mult;
+				keyvalues["StatusHealthRegen"] *= g_Mult;
+				keyvalues["StatusMana"] *= g_Mult;
+				keyvalues["StatusManaRegen"] *= g_Mult;
+				
+				break;
+			}
+		}
+	}
+	
+	if (g_Heroes)
+	{
+		if (dota.heroes.indexOf(unitClassName) != -1)
+		{
+			keyvalues["AttributeBaseStrength"] *= g_Mult;
+			keyvalues["AttributeBaseAgility"] *= g_Mult;
+			keyvalues["AttributeBaseIntelligence"] *= g_Mult;
+			
+			keyvalues["AttributeStrengthGain"] *= g_Mult;
+			keyvalues["AttributeAgilityGain"] *= g_Mult;
+			keyvalues["AttributeIntelligenceGain"] *= g_Mult;
+		}
+	}
+}
+
 function changePower(values, isInc, isCap)
 {
 	var oldValues = values;
 	var cap = g_Cap;
-				
-	function think(v)
+	
+	function aglMult(v)
 	{
 		var cur_chance;
 		var chance = Math.sqrt(v * v);
@@ -88,7 +153,7 @@ function changePower(values, isInc, isCap)
 		if (isCap)
 		{
 
-			values = values.map(think);
+			values = values.map(aglMult);
 			
 			values = values.map(function(v) {return Math.min(v, cap);});
 			values = values.map(function(v) {return Math.max(v, -cap);});
@@ -121,12 +186,14 @@ function onEntityHurt(event)
 	
 	var inflictorName = inflictor.getClassname();
 	
+	if (DEBUG) printToAll("onEntityHurt");
+	
 	for (var i in nonBoostDamageSpells)
 	{
 		if (nonBoostDamageSpells[i][0].indexOf(inflictorName) != -1)
 		{
 			var skillLevel = inflictor.netprops.m_iLevel;
-			var dmg = nonBoostDamageSpells[i][skillLevel] * (g_Mult - 1.0);
+			var dmg = nonBoostDamageSpells[i][skillLevel] * (g_Mult - 1);
 			
 			dota.applyDamage(attacker, attacked, inflictor, dmg, damageType);
 			
@@ -139,7 +206,8 @@ function onEntityHurt(event)
 
 
 game.hook("Dota_OnGetAbilityValue", onGetAbilityValue);
-game.hookEvent("entity_hurt", onEntityHurt, true);
+game.hook("Dota_OnUnitParsed", onUnitParsed);
+//game.hookEvent("entity_hurt", onEntityHurt, true); // coz apply damage not work
 game.hook("OnGameFrame", onGameFrame);
 
 plugin.get("LobbyManager", function(lobbyManager)
@@ -153,9 +221,18 @@ plugin.get("LobbyManager", function(lobbyManager)
 	case "x2.0":
 		g_Mult = 2.0;
 		break;
+	case "x2.5":
+		g_Mult = 2.5;
+		break;
 	default:
 	case "x3.0":
 		g_Mult = 3.0;
+		break;
+	case "x4.0":
+		g_Mult = 4.0;
+		break;
+	case "x5.0":
+		g_Mult = 5.0;
 		break;
 	}
 	
@@ -174,24 +251,11 @@ plugin.get("LobbyManager", function(lobbyManager)
 		break;
 	}
 	
-	var s = lobbyManager.getOptionsForPlugin("CustomSpellPower")["Spec"];
-	g_SpecText = s;
-	switch(s)
-	{
-	default:
-	case "Spells and Items":
-		g_Spells = true;
-		g_Items = true;
-		break;
-	case "Spells":
-		g_Spells = true;
-		g_Items = false;
-		break;
-	case "Items":
-		g_Spells = false;
-		g_Items = true;
-		break;
-	}
+	var spec = lobbyManager.getOptionsForPlugin("CustomSpellPower")["Spec"];
+	g_SpecText = spec;
+	g_Spells = spec.indexOf("Spells") != -1;
+	g_Spells = spec.indexOf("Items") != -1;
+	g_Spells = spec.indexOf("Heroes") != -1;
 });
 
 var msgPrinted = false;
@@ -240,6 +304,65 @@ function getConnectedPlayingClients()
 	}
 	return playing;
 }
+
+var spellSummoned = 
+[
+	"npc_dota_lone_druid_bear1",
+	"npc_dota_lone_druid_bear2",
+	"npc_dota_lone_druid_bear3",
+	"npc_dota_lone_druid_bear4",
+	"npc_dota_visage_familiar1",
+	"npc_dota_visage_familiar2",
+	"npc_dota_visage_familiar3",
+	"npc_dota_lycan_wolf1",
+	"npc_dota_lycan_wolf2",
+	"npc_dota_lycan_wolf3",
+	"npc_dota_lycan_wolf4",
+	"npc_dota_venomancer_plague_ward_1",
+	"npc_dota_venomancer_plague_ward_2",
+	"npc_dota_venomancer_plague_ward_3",
+	"npc_dota_venomancer_plague_ward_4",
+	"npc_dota_shadow_shaman_ward_1",
+	"npc_dota_shadow_shaman_ward_2",
+	"npc_dota_shadow_shaman_ward_3",
+	"npc_dota_pugna_nether_ward_1",
+	"npc_dota_pugna_nether_ward_2",
+	"npc_dota_pugna_nether_ward_3",
+	"npc_dota_pugna_nether_ward_4",
+	"npc_dota_unit_tombstone1",
+	"npc_dota_unit_tombstone2",
+	"npc_dota_unit_tombstone3",
+	"npc_dota_unit_tombstone4",
+	"npc_dota_warlock_golem_1",
+	"npc_dota_warlock_golem_2",
+	"npc_dota_warlock_golem_3",
+	"npc_dota_warlock_golem_scepter_1",
+	"npc_dota_warlock_golem_scepter_2",
+	"npc_dota_warlock_golem_scepter_3",
+	"npc_dota_broodmother_spiderling",
+	"npc_dota_broodmother_spiderite",
+	"npc_dota_furion_treant",
+	"npc_dota_templar_assassin_psionic_trap",
+	"npc_dota_rattletrap_cog",
+	"npc_dota_weaver_swarm",
+	"npc_dota_gyrocopter_homing_missile",
+	"npc_dota_scout_hawk",
+	"npc_dota_greater_hawk",
+	"npc_dota_beastmaster_boar",
+	"npc_dota_beastmaster_greater_boar",
+	"npc_dota_witch_doctor_death_ward",
+	"npc_dota_unit_undying_zombie"
+]
+
+var itemSummoned = 
+[
+	"npc_dota_necronomicon_warrior_1",
+	"npc_dota_necronomicon_warrior_2",
+	"npc_dota_necronomicon_warrior_3",
+	"npc_dota_necronomicon_archer_1",
+	"npc_dota_necronomicon_archer_2",
+	"npc_dota_necronomicon_archer_3"
+]
 
 var capedParam =
 [
@@ -316,7 +439,8 @@ var decreaseParam =
 	"invoker_ghost_walk.aura_fade_time",
 	"brewmaster_storm_wind_walk.fade_time",
 	"treant_natures_guise.fade_time",
-	"windrunner_focusfire.focusfire_damage_reduction"
+	"windrunner_focusfire.focusfire_damage_reduction",
+	"lone_druid_spirit_bear.backlash_damage"
 ]
 
 var increaseParam =
@@ -324,7 +448,6 @@ var increaseParam =
 	"attribute_bonus.attribute_bonus_per_level",
 	"antimage_mana_break.damage_per_burn",
 	"antimage_blink.blink_range",
-	"antimage_blink.min_blink_range",
 	"antimage_spell_shield.spell_shield_resistance",
 	"antimage_mana_void.mana_void_damage_per_mana",
 	"antimage_mana_void.mana_void_ministun",
@@ -886,7 +1009,7 @@ var increaseParam =
 	"dazzle_shallow_grave.range_tooltip",
 	"dazzle_shadow_wave.bounce_radius",
 	"dazzle_shadow_wave.damage_radius",
-	"dazzle_shadow_wave.max_targets",
+	//"dazzle_shadow_wave.max_targets",
 	"dazzle_shadow_wave.damage",
 	"dazzle_weave.radius",
 	"dazzle_weave.armor_per_second",
@@ -1276,7 +1399,7 @@ var increaseParam =
 	"lycan_summon_wolves_critical_strike.crit_damage",
 	"lone_druid_spirit_bear.bear_hp",
 	"lone_druid_spirit_bear.bear_armor",
-	"lone_druid_spirit_bear.backlash_damage",
+	"lone_druid_spirit_bear.bear_bat",
 	"lone_druid_rabid.bonus_attack_speed",
 	"lone_druid_rabid.bonus_move_speed",
 	"lone_druid_rabid.rabid_duration",
@@ -1940,7 +2063,7 @@ var increaseParam =
 	"item_gloves.bonus_attack_speed",
 	"item_ring_of_regen.bonus_health_regen",
 	"item_sobi_mask.bonus_mana_regen",
-	"item_boots.bonus_movement_speed",
+	//"item_boots.bonus_movement_speed",
 	"item_gem.radius",
 	"item_cloak.bonus_magical_armor",
 	"item_talisman_of_evasion.bonus_evasion",
@@ -1965,9 +2088,9 @@ var increaseParam =
 	"item_ward_sentry.health",
 	"item_tango.buff_duration",
 	"item_tango.total_heal",
-	"item_travel_boots.bonus_movement_speed",
+	//"item_travel_boots.bonus_movement_speed",
 	"item_phase_boots.phase_duration",
-	"item_phase_boots.bonus_movement_speed",
+	//"item_phase_boots.bonus_movement_speed",
 	"item_phase_boots.bonus_damage",
 	"item_demon_edge.bonus_damage",
 	"item_eagle.bonus_agility",
@@ -1981,7 +2104,7 @@ var increaseParam =
 	"item_point_booster.bonus_mana",
 	"item_point_booster.bonus_health",
 	"item_vitality_booster.bonus_health",
-	"item_power_treads.bonus_movement_speed",
+	//"item_power_treads.bonus_movement_speed",
 	"item_power_treads.bonus_stat",
 	"item_power_treads.bonus_attack_speed",
 	"item_hand_of_midas.bonus_attack_speed",
@@ -2060,7 +2183,7 @@ var increaseParam =
 	"item_orchid.silence_damage_percent",
 	"item_cyclone.bonus_intellect",
 	"item_cyclone.bonus_mana_regen",
-	"item_cyclone.bonus_movement_speed",
+	//"item_cyclone.bonus_movement_speed",
 	"item_cyclone.cyclone_duration",
 	"item_force_staff.bonus_intellect",
 	"item_force_staff.bonus_health_regen",
@@ -2258,7 +2381,7 @@ var increaseParam =
 	"item_soul_ring.mana_regen",
 	"item_soul_ring.health_sacrifice",
 	"item_soul_ring.duration",
-	"item_arcane_boots.bonus_movement",
+	//"item_arcane_boots.bonus_movement",
 	"item_arcane_boots.bonus_mana",
 	"item_arcane_boots.replenish_radius",
 	"item_arcane_boots.replenish_amount",
@@ -2307,7 +2430,7 @@ var increaseParam =
 	"item_ring_of_aquila.aura_radius",
 	"item_ring_of_aquila.aura_mana_regen",
 	"item_ring_of_aquila.aura_bonus_armor",
-	"item_tranquil_boots.bonus_movement_speed",
+	//"item_tranquil_boots.bonus_movement_speed",
 	"item_tranquil_boots.bonus_armor",
 	"item_tranquil_boots.bonus_health_regen",
 	"item_tranquil_boots.heal_duration",
