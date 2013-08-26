@@ -2,9 +2,9 @@
 
 var DEBUG = false;
 
-var g_Mult = 5.0;
+var g_Mult = 3.0;
 var g_Cap = 80.0;
-var g_Spells = true, g_Items = true, g_Heroes = true, g_SpecText = "Spells & Items & Heroes";
+var g_Spells = true, g_Items = true, g_Heroes = false, g_SpecText = "Spells & Items";
 
 
 
@@ -27,12 +27,21 @@ function onGetAbilityValue(ability, abilityName, field, values)
 			return;
 	}
 	
+	for (var i in stunParam)
+	{
+		if (fullName.indexOf(stunParam[i]) != -1)
+		{
+			if (DEBUG) printToAll("stunParam : " + fullName);
+			return changePower(values, true, true, true);
+		}
+	}
+	
 	for (var i in capedParam)
 	{
 		if (fullName == capedParam[i])
 		{
 			if (DEBUG) printToAll("capedParam : " + fullName);
-			return changePower(values, true, true);
+			return changePower(values, true, true, false);
 		}
 	}
 	
@@ -41,7 +50,7 @@ function onGetAbilityValue(ability, abilityName, field, values)
 		if (fullName == decreaseParam[i])
 		{
 			if (DEBUG) printToAll("decreaseParam : " + fullName);
-			return changePower(values, false, false);
+			return changePower(values, false, false, false);
 		}
 	}
 	
@@ -50,7 +59,7 @@ function onGetAbilityValue(ability, abilityName, field, values)
 		if (fullName == increaseParam[i])
 		{
 			if (DEBUG) printToAll("increaseParam : " + fullName);
-			return changePower(values, true, false);
+			return changePower(values, true, false, false);
 		}
 	}
 	
@@ -70,8 +79,6 @@ function onUnitParsed(unit, keyvalues)
 		{
 			if (modelPath.indexOf(spellSummoned[i]) != -1)
 			{
-				//game.precacheModel(keyvalues["Model"], true);
-				//keyvalues["ModelScale"] += (0.10 * g_Mult);
 				keyvalues["ArmorPhysical"] *= g_Mult;
 				keyvalues["AttackDamageMin"] *= g_Mult;
 				keyvalues["AttackDamageMax"] *= g_Mult;
@@ -94,7 +101,6 @@ function onUnitParsed(unit, keyvalues)
 		{
 			if (modelPath.indexOf(spellSummoned[i]) != -1)
 			{
-				//keyvalues["ModelScale"] += (0.10 * g_Mult);
 				keyvalues["ArmorPhysical"] *= g_Mult;
 				keyvalues["AttackDamageMin"] *= g_Mult;
 				keyvalues["AttackDamageMax"] *= g_Mult;
@@ -126,12 +132,44 @@ function onUnitParsed(unit, keyvalues)
 	}
 }
 
-function changePower(values, isInc, isCap)
+function changePower(values, isInc, isCap, isStun)
 {
 	var oldValues = values;
-	var cap = g_Cap;
 	
-	function aglMult(v)
+	if (isStun)
+	{
+		var cap = g_Cap;
+		
+		values = values.map(function(v) {return (v * g_Mult) * 0.75;});
+		values = values.map(function(v) {return Math.min(v, 2 * g_Mult);});
+		
+		if (DEBUG) printToAll("Power changed: " + oldValues + " => " + values);
+		return values;
+	}
+	
+	if (isCap)
+	{
+		var cap = g_Cap;
+		
+		values = values.map(algMult); // crush???
+		//values = values.map(function(v) {return v * g_Mult;});
+		
+		values = values.map(function(v) {return Math.min(v, cap);});
+		values = values.map(function(v) {return Math.max(v, -cap);});
+		
+		if (DEBUG) printToAll("Power changed: " + oldValues + " => " + values);
+		return values;
+	}
+	
+	if (isInc)
+		values = values.map(function(v) {return v * g_Mult;});
+	else
+		values = values.map(function(v) {return v / g_Mult;});
+	
+	if (DEBUG) printToAll("Power changed: " + oldValues + " => " + values);
+	return values;
+	
+	function algMult(v)
 	{
 		var cur_chance;
 		var chance = Math.sqrt(v * v);
@@ -149,29 +187,6 @@ function changePower(values, isInc, isCap)
 
 		return Math.round(cur_chance);
 	}
-	
-	if (isInc)
-	{
-		if (isCap)
-		{
-
-			//values = values.map(aglMult); // crush???
-			values = values.map(function(v) {return v * g_Mult;});
-			
-			values = values.map(function(v) {return Math.min(v, cap);});
-			values = values.map(function(v) {return Math.max(v, -cap);});
-		}
-		else
-			values = values.map(function(v) {return v * g_Mult;});
-	}
-	else
-	{
-		values = values.map(function(v) {return v / g_Mult;});
-	}
-	
-	if (DEBUG) printToAll("Power changed: " + oldValues + " => " + values);
-	
-	return values;
 }
 
 function onEntityHurt(event)
@@ -209,50 +224,32 @@ game.hook("OnGameFrame", onGameFrame);
 
 plugin.get("LobbyManager", function(lobbyManager)
 {
-	var m = lobbyManager.getOptionsForPlugin("CustomSpellPower")["Multiplier"];
-	switch(m)
+	var Mult = lobbyManager.getOptionsForPlugin("CustomSpellPower")["Multiplier"];
+	for (var f = 0.0; f <= 10.0; f += 0.1)
 	{
-	case "x1.5":
-		g_Mult = 1.5;
-		break;
-	case "x2.0":
-		g_Mult = 2.0;
-		break;
-	case "x2.5":
-		g_Mult = 2.5;
-		break;
-	default:
-	case "x3.0":
-		g_Mult = 3.0;
-		break;
-	case "x4.0":
-		g_Mult = 4.0;
-		break;
-	case "x5.0":
-		g_Mult = 5.0;
-		break;
+		var fs = "x" + f.toFixed(1);
+		if (fs.indexOf(Mult) != -1)
+		{
+			g_Mult = f;
+			break;
+		}
 	}
 	
-	var c = lobbyManager.getOptionsForPlugin("CustomSpellPower")["Cap"];
-	switch(c)
+	var Cap = lobbyManager.getOptionsForPlugin("CustomSpellPower")["Cap"];
+	for (var i = 0; i <= 100; i += 1)
 	{
-	case "60%":
-		g_Cap = 60.0;
-		break;
-	default:
-	case "80%":
-		g_Cap = 80.0;
-		break;
-	case "100%":
-		g_Cap = 100.0;
-		break;
+		var fs = i + "%";
+		if (fs.indexOf(Cap) != -1)
+		{
+			g_Cap = i;
+			break;
+		}
 	}
 	
-	var spec = lobbyManager.getOptionsForPlugin("CustomSpellPower")["Spec"];
-	g_SpecText = spec;
-	g_Spells = spec.indexOf("Spells") != -1;
-	g_Items = spec.indexOf("Items") != -1;
-	g_Heroes = spec.indexOf("Heroes") != -1;
+	g_SpecText = lobbyManager.getOptionsForPlugin("CustomSpellPower")["Spec"];
+	g_Spells = g_SpecText.indexOf("Spells") != -1;
+	g_Items = g_SpecText.indexOf("Items") != -1;
+	g_Heroes = g_SpecText.indexOf("Heroes") != -1;
 });
 
 var msgPrinted = false;
@@ -312,7 +309,6 @@ var spellSummoned =
 	"pugna_ward",
 	"undying_tower",
 	"warlock_demon",
-	"warlock_demon",
 	"spiderling",
 	"treant",
 	"lanaya_trap_crystal_invis",
@@ -330,6 +326,15 @@ var itemSummoned =
 [
 	"necro_warrior",
 	"necro_archer"
+]
+
+var stunParam =
+[
+	"stun_duration",
+	"stun_min",
+	"stun_max",
+	"min_stun",
+	"max_stun"
 ]
 
 var capedParam =
@@ -370,6 +375,7 @@ var capedParam =
 	"greevil_miniboss_blue_ice_vortex.spell_resist_pct",
 	"antimage_spell_shield.spell_shield_resistance",
 	"viper_corrosive_skin.bonus_magic_resistance",
+	"spectre_dispersion.damage_reflection_pct",
 	"item_hood_of_defiance.bonus_spell_resist",
 	"item_pipe.magic_resistance",
 	"item_javelin.bonus_chance",
@@ -408,7 +414,9 @@ var decreaseParam =
 	"brewmaster_storm_wind_walk.fade_time",
 	"treant_natures_guise.fade_time",
 	"windrunner_focusfire.focusfire_damage_reduction",
-	"lone_druid_spirit_bear.backlash_damage"
+	"lone_druid_spirit_bear.backlash_damage",
+	"huskar_life_break.health_cost_percent",
+	"huskar_life_break.tooltip_health_cost_percent"
 ]
 
 var increaseParam =
@@ -1071,10 +1079,8 @@ var increaseParam =
 	"huskar_burning_spear.health_cost",
 	"huskar_berserkers_blood.attack_speed_bonus_per_stack",
 	"huskar_berserkers_blood.resistance_per_stack",
-	"huskar_life_break.health_cost_percent",
 	"huskar_life_break.health_damage",
 	"huskar_life_break.health_damage_scepter",
-	"huskar_life_break.tooltip_health_cost_percent",
 	"huskar_life_break.tooltip_health_damage",
 	"huskar_life_break.tooltip_health_damage_scepter",
 	"night_stalker_void.duration_day",
@@ -1176,9 +1182,9 @@ var increaseParam =
 	"spectre_spectral_dagger.path_radius",
 	"spectre_desolate.bonus_damage",
 	"spectre_desolate.radius",
-	"spectre_dispersion.min_radius",
+	//"spectre_dispersion.min_radius",
 	"spectre_dispersion.max_radius",
-	"spectre_dispersion.damage_reflection_pct",
+	//"spectre_dispersion.damage_reflection_pct",
 	"spectre_haunt.duration",
 	"spectre_haunt.illusion_damage_incoming",
 	"spectre_haunt.illusion_damage_outgoing",
@@ -2155,6 +2161,7 @@ var increaseParam =
 	"item_cyclone.cyclone_duration",
 	"item_force_staff.bonus_intellect",
 	"item_force_staff.bonus_health_regen",
+	"item_force_staff.push_length",
 	"item_dagon.bonus_intellect",
 	"item_dagon.bonus_all_stats",
 	"item_dagon.bonus_damage",
