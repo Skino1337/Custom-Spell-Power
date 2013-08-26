@@ -30,8 +30,8 @@
 			"type": "select",
 			"options":
 			[
-				"Spells & Items & Heroes",
 				"Spells & Items",
+				"Spells & Items & Heroes",
 				"Items & Heroes",
 				"Spells & Heroes",
 				"Spells",
