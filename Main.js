@@ -230,7 +230,7 @@ plugin.get("LobbyManager", function(lobbyManager)
 		var fs = "x" + f.toFixed(1);
 		if (fs.indexOf(Mult) != -1)
 		{
-			g_Mult = f;
+			g_Mult = f.toFixed(1);
 			break;
 		}
 	}
@@ -376,6 +376,10 @@ var capedParam =
 	"antimage_spell_shield.spell_shield_resistance",
 	"viper_corrosive_skin.bonus_magic_resistance",
 	"spectre_dispersion.damage_reflection_pct",
+	"huskar_life_break.health_damage",
+	"huskar_life_break.health_damage_scepter",
+	"huskar_life_break.tooltip_health_damage",
+	"huskar_life_break.tooltip_health_damage_scepter",
 	"item_hood_of_defiance.bonus_spell_resist",
 	"item_pipe.magic_resistance",
 	"item_javelin.bonus_chance",
@@ -490,7 +494,7 @@ var increaseParam =
 	"kunkka_tidebringer.damage_bonus",
 	"kunkka_x_marks_the_spot.duration",
 	"kunkka_x_marks_the_spot.tooltip_range",
-	"kunkka_ghostship.ghostship_distance",
+	"kunkka_ghostship.ghostship_width",
 	"kunkka_ghostship.stun_duration",
 	"kunkka_ghostship.movespeed_bonus",
 	"kunkka_ghostship.buff_duration",
@@ -1079,10 +1083,6 @@ var increaseParam =
 	"huskar_burning_spear.health_cost",
 	"huskar_berserkers_blood.attack_speed_bonus_per_stack",
 	"huskar_berserkers_blood.resistance_per_stack",
-	"huskar_life_break.health_damage",
-	"huskar_life_break.health_damage_scepter",
-	"huskar_life_break.tooltip_health_damage",
-	"huskar_life_break.tooltip_health_damage_scepter",
 	"night_stalker_void.duration_day",
 	"night_stalker_void.duration_night",
 	"night_stalker_void.movespeed_slow",
