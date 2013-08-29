@@ -15,16 +15,6 @@
 				"x5.0"
 			]
 		},
-		"Cap":
-		{
-			"type": "select",
-			"options":
-			[
-				"80%",
-				"60%",
-				"100%"
-			]
-		},
 		"Spec":
 		{
 			"type": "select",
