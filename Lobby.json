@@ -1,18 +1,74 @@
 {
-	"mainFields": ["Multiplier"], 
+	"mainFields": ["Global"],
 	"fields":
 	{
-		"Multiplier":
+		"Global":
 		{
 			"type": "select",
 			"options":
 			[
-				"x3.0",
-				"x1.5",
-				"x2.0",
-				"x2.5",
-				"x4.0",
-				"x5.0"
+				"Global x3.0",
+				"Global x1.5",
+				"Global x2.0",
+				"Global x2.5",
+				"Global x4.0",
+				"Global x5.0"
+			]
+		},
+		"Damage":
+		{
+			"type": "select",
+			"options":
+			[
+				"Damage Global",
+				"Damage x1.5",
+				"Damage x2.0",
+				"Damage x2.5",
+				"Damage x3.0",
+				"Damage x4.0",
+				"Damage x5.0"
+			]
+		},
+		"Distance":
+		{
+			"type": "select",
+			"options":
+			[
+				"Distance Global",
+				"Distance x1.5",
+				"Distance x2.0",
+				"Distance x2.5",
+				"Distance x3.0",
+				"Distance x4.0",
+				"Distance x5.0"
+			]
+		},
+		"Duration":
+		{
+			"type": "select",
+			"options":
+			[
+				"Duration Global",
+				"Duration x1.5",
+				"Duration x2.0",
+				"Duration x2.5",
+				"Duration x3.0",
+				"Duration x4.0",
+				"Duration x5.0"
+			]
+		},
+		"Other":
+		{
+			"type": "select",
+			"options":
+			[	
+				"Other Global",
+				"Other x1.5",
+				"Other x2.0",
+				"Other x2.5",
+				"Other x3.0",
+				"Other x4.0",
+				"Other x5.0"
 			]
 		},
 		"Spec":
